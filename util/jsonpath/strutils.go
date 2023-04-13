@@ -13,8 +13,8 @@ func isAlphaNumeric(r rune) bool {
 	return r == '_' || unicode.IsLetter(r) || unicode.IsDigit(r)
 }
 
-// unquoteExtend is almost same as strconv.Unquote(), but it supports parseNodeIdentifier single quotes as a string
-func unquoteExtend(s string) (string, error) {
+// UnquoteExtend is almost same as strconv.Unquote(), but it supports parseNodeIdentifier single quotes as a string
+func UnquoteExtend(s string) (string, error) {
 	n := len(s)
 	if n < 2 {
 		return "", fmt.Errorf("quoted str too short")
