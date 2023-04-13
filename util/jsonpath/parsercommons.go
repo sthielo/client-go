@@ -163,7 +163,7 @@ Loop:
 		}
 	}
 	value := p.consume()
-	s, err := unquoteExtend(value)
+	s, err := UnquoteExtend(value)
 	if err != nil {
 		return "", err
 	}

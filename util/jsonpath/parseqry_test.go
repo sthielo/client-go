@@ -562,7 +562,10 @@ func TestFailParseQuery(t *testing.T) {
 		{"newline not supported in quoted string - even not when escaped", "$.'\\\n'", "escaping of newline not supported"},
 		{"empty query", "", "empty query"},
 		{"invalid compare op '='", "..[?.'color'='brown']", "invalid compare-operator - single '='"},
-		{"singular-query required but not provided", "$[?.'persons'.* <= 'abc']", "expected singular-query for comparison-element"},
+
+		// todo be graceful for backward compatibility => only fail on execution when a query returns multiple results and not strictly on (child-segment/name/index-selector only queries as in specs)
+		// {"singular-query required but not provided", "$[?.'persons'.* <= 'abc']", "expected singular-query for comparison-element"},
+
 		{"chained comparisons not allowed", "$[?.'persons'[0].'firstName' <= 'abc' == true]", "chained comparison not allowed"},
 		{"superrecurfields", "............................................................'Price'", "invalid chaining of '.'/'..' segment-operators"},
 		{"invalid-fctname non-alphanumeric", "[?abc-def(.'abs')]", "invalid/non-alphanumeric function name"},
