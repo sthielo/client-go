@@ -100,6 +100,8 @@ var execTmplTests = []execTmplTest{
 
 	{"{.users[?(@.name==\"e2e\")].user.password}", "filter", exampleTestData(), legacyFormat, "secret", true, false},
 	{"{range .items[*]}{.metadata.name}{'\t'}{end}", "quoted string", exampleTestData(), legacyFormat, "127.0.0.1\t127.0.0.2\t", true, false},
+
+	{"{range .items[*]}relative path kind {.kind}; root kind {$.kind}{\"\n\"}{end}", "relative and absolute path template queries", exampleTestData(), legacyFormat, "relative path kind None; root kind List\nrelative path kind None; root kind List\n", true, false},
 }
 
 func TestExecTmpl(t *testing.T) {
