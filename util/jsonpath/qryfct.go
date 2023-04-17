@@ -13,8 +13,7 @@ type QueryResult interface {
 // ResultSet represents the results of a filter-query
 // OfSingularQuery indicates whether that query is a singular-query and as such guarantees max 1 element in Elems
 type ResultSet struct {
-	Elems                   []reflect.Value
-	producedBySingularQuery bool
+	Elems []reflect.Value
 }
 
 func (_ ResultSet) qryResultInheritanceLimiter() {}
@@ -42,6 +41,7 @@ func newFunctionRegistry() functionRegistry {
 		"count":  count,
 		"length": length,
 		"match":  match,
+		"search": search,
 	}
 }
 
@@ -119,25 +119,26 @@ func count(args ...QueryResult) (QueryResult, error) {
 			return nil, nil
 		}
 		return &Singular{len(rs)}, nil
-	case *Singular: // be nice and also give the size of singular values of type array, map, struct, string
-		rs := arg.(*Singular).Value
-		switch rs.(type) {
-		case reflect.Value:
-			switch rs.(reflect.Value).Kind() {
-			case reflect.Array, reflect.Slice, reflect.String, reflect.Map:
-				return &Singular{rs.(reflect.Value).Len()}, nil
-			case reflect.Struct:
-				return &Singular{rs.(reflect.Value).NumField()}, nil
-			default:
-				// not defined other types - actually none expected here!!!
-				return nil, nil
-			}
-		default:
-			// not defined for simple types
-			return nil, nil
-		}
+	// TODO shall we be nice and also give the size of singular values of type array, map, struct, string? => actually length() should be used in these cases!
+	//case *Singular:
+	//	rs := arg.(*Singular).Value
+	//	switch rs.(type) {
+	//	case reflect.Value:
+	//		switch rs.(reflect.Value).Kind() {
+	//		case reflect.Array, reflect.Slice, reflect.String, reflect.Map:
+	//			return &Singular{rs.(reflect.Value).Len()}, nil
+	//		case reflect.Struct:
+	//			return &Singular{rs.(reflect.Value).NumField()}, nil
+	//		default:
+	//			// not defined other types - actually none expected here!!!
+	//			return nil, nil
+	//		}
+	//	default:
+	//		// not defined for simple types
+	//		return nil, nil
+	//	}
 	default:
-		panic(fmt.Sprintf("unsupported type of QueryResult: %#v", arg))
+		return nil, fmt.Errorf("count - unsupported type of QueryResult: %#v", arg)
 	}
 }
 
@@ -209,6 +210,7 @@ func length(args ...QueryResult) (QueryResult, error) {
 // literal or singular-query returning a string), to return a singular bool value
 // jsonpath regexp - actually using go regexp with the adaption described in this jsonpath regexp spec
 // reference: https://www.ietf.org/archive/id/draft-ietf-jsonpath-iregexp-04.html#name-pcre-re2-ruby-regexps
+// match vs search: according to spec: match must match the entire string
 func match(args ...QueryResult) (QueryResult, error) {
 	if len(args) != 2 {
 		return nil, fmt.Errorf("invalid nr of args to function 'match' - requires exactly TWO arguments")
@@ -229,6 +231,38 @@ func match(args ...QueryResult) (QueryResult, error) {
 	}
 
 	re, err := regexp.Compile("\\A(?:" + regexpSingular.Value.(string) + ")\\z")
+	if err != nil {
+		return nil, err
+	}
+	match := re.MatchString(matchTargetSingular.Value.(string))
+	return &Singular{match}, nil
+}
+
+// search tests a Singular (or singular-query result) input argument with a regexp, a singular 2nd string arg (so string
+// literal or singular-query returning a string), to return a singular bool value
+// jsonpath regexp - actually using go regexp with the adaption described in this jsonpath regexp spec
+// reference: https://www.ietf.org/archive/id/draft-ietf-jsonpath-iregexp-04.html#name-pcre-re2-ruby-regexps
+// match vs search: according to spec: search is looking for a substraing that matches the regexp
+func search(args ...QueryResult) (QueryResult, error) {
+	if len(args) != 2 {
+		return nil, fmt.Errorf("invalid nr of args to function 'match' - requires exactly TWO arguments")
+	}
+
+	matchTargetSingular, err := getSingularString(args[0])
+	if err != nil {
+		return nil, err
+	}
+
+	regexpSingular, err := getSingularString(args[1])
+	if err != nil {
+		return nil, err
+	}
+
+	if matchTargetSingular == nil || regexpSingular == nil || matchTargetSingular.Value == nil || regexpSingular.Value == nil {
+		return nil, nil
+	}
+
+	re, err := regexp.Compile(regexpSingular.Value.(string))
 	if err != nil {
 		return nil, err
 	}

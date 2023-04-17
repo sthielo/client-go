@@ -58,7 +58,7 @@ func (ctx qryExecContext) duplicateAndTakeFirstSegmentOff() qryExecContext {
 }
 
 func emptyResultSet() *ResultSet {
-	return &ResultSet{[]reflect.Value{}, false}
+	return &ResultSet{[]reflect.Value{}}
 }
 
 var dbgFormat = resultFormat{condensedJsonFormatted, "%.2f"}
@@ -154,7 +154,7 @@ func findResults(ctx qryExecContext, curNode reflect.Value) (*ResultSet, error) 
 	// end of JSONPath segments
 	if len(ctx.remainingSegments) <= 0 {
 		ctx.dbgMsgf("found a result - no segments left on node: %s", curNode)
-		return &ResultSet{[]reflect.Value{curNode}, false}, nil
+		return &ResultSet{[]reflect.Value{curNode}}, nil
 	}
 
 	n, isNil := indirect(curNode)
@@ -181,7 +181,7 @@ func findResults(ctx qryExecContext, curNode reflect.Value) (*ResultSet, error) 
 			results = append(results, nodeResults.Elems...)
 		}
 	}
-	return &ResultSet{results, false}, nil
+	return &ResultSet{results}, nil
 }
 
 func selectChildrenAndFindResultsForThem(ctx qryExecContext, curNode reflect.Value) (*ResultSet, error) {
@@ -389,7 +389,7 @@ func doWithSelected(ctx qryExecContext, selected reflect.Value) (*ResultSet, err
 	if len(ctx.remainingSegments) <= 0 {
 		ctx.dbgMsgf("found a result - selected child and no segments left: %s", n)
 		if ctx.evalExistenceOnly {
-			return &ResultSet{[]reflect.Value{selected}, false}, nil
+			return &ResultSet{[]reflect.Value{selected}}, nil
 		}
 		selectedNodeResults = append(selectedNodeResults, selected)
 	} else {
@@ -423,7 +423,7 @@ func doWithSelected(ctx qryExecContext, selected reflect.Value) (*ResultSet, err
 			selectedNodeResults = append(selectedNodeResults, descendantResults.Elems...)
 		}
 	}
-	return &ResultSet{selectedNodeResults, false}, nil
+	return &ResultSet{selectedNodeResults}, nil
 }
 
 func doWithNotSelected(ctx qryExecContext, notSelected reflect.Value) (*ResultSet, error) {
@@ -479,7 +479,7 @@ func walkChildren(ctx qryExecContext, curNode reflect.Value, reverseOrder bool, 
 				return nil, err
 			}
 			if ctx.evalExistenceOnly && len(results) > 0 {
-				return &ResultSet{results, false}, nil
+				return &ResultSet{results}, nil
 			}
 		}
 		break
@@ -492,7 +492,7 @@ func walkChildren(ctx qryExecContext, curNode reflect.Value, reverseOrder bool, 
 				return nil, err
 			}
 			if ctx.evalExistenceOnly && len(results) > 0 {
-				return &ResultSet{results, false}, nil
+				return &ResultSet{results}, nil
 			}
 		}
 		break
@@ -514,7 +514,7 @@ func walkChildren(ctx qryExecContext, curNode reflect.Value, reverseOrder bool, 
 				return nil, err
 			}
 			if ctx.evalExistenceOnly && len(results) > 0 {
-				return &ResultSet{results, false}, nil
+				return &ResultSet{results}, nil
 			}
 		}
 		break
@@ -527,7 +527,7 @@ func walkChildren(ctx qryExecContext, curNode reflect.Value, reverseOrder bool, 
 	default:
 		panic(fmt.Sprintf("internal error - unsupported kind of child"))
 	}
-	return &ResultSet{results, false}, nil
+	return &ResultSet{results}, nil
 }
 
 func selectChildrenByFilterAndFindResultsForThem(ctx qryExecContext, curNode reflect.Value) (*ResultSet, error) {
